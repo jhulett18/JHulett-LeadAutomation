@@ -3,25 +3,56 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from openpyxl import Workbook
+
+import pandas as pd
+  
 
 manateeDirectory = "https://www.manateeschools.net/schooldirectory"
 
 
+
+# Webdriver Information
 options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(options=options)
 
-keywords = ['Elementary', 'High', 'Middle', 'Academy', 'College', 'School']
+# Variable Initializing
+
+schoolKeywords = ['Elementary', 'High', 'Middle', 'Academy', 'College', 'School']
+phoneNumberKeywords = ['Phone']
 schoolNameList = []
-AddressList = []
-PhoneList = []
 
+wb = Workbook()
+sheet = wb.active
 
+columns = ['School Name']
 
+data = pd.DataFrame()
+
+# Start
 driver.get(manateeDirectory)
 
+def getPhoneNumber(filteredList):
+    try:
+        target = WebDriverWait(driver, 3).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "flex-container"))
+            )
+    
+    except:
+        print("Locator for School Information was not found. Try making sure the spelling is correct.")
+        driver.quit()
+    
+    finally:
+
+     # Find and return the matching words
+        matching_keywords = []
+        for word in filteredList:
+            if word in keywords:
+                matching_keywords.append(word)
 
 
 def getNextSchool():
+    
     try:
         target = WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.CLASS_NAME, "flex-container"))
@@ -86,25 +117,47 @@ def getNextSchool():
             # Present Final Title
             finalSchoolName = ' '.join(elements_to_left)
 
+            # Adding Final List to a dataframe
+
+            
             # Debug Log (Prints left in for demo purposes)
             print("---------------- DEBUG LOG -----------------------------")
             print(" ") # Empty Space
             print("List #" + str(counter))
             print(" ")
             # print(keywordPosition)
-            # print(formattedList)
+            print(formattedList)
             # print(filterNumbers)
             # print(elements_to_left) 
-            print(finalSchoolName)
+            # print(finalSchoolName)
+            # print(sheet.cell(row=1, column=1).value)
+            # print(sheet)
             print(" ") 
             print("---------------- END -----------------------------------")
             print(" ") 
             print(" ") 
 
             schoolNameList.append(finalSchoolName)
+
+                
 getNextSchool()
 
-print(schoolNameList)
+# counterTemp = 0
+# cellRow = 'A' + str(counterTemp) 
+# print(cellRow)
+# Write the list values to the sheet
+
+# Workbook.save('example.xlsx')
+# print(schoolNameList)
+data = pd.DataFrame(schoolNameList, columns=['School Name'])
+# print(data)
+print("\n")
+print("\n")
+data.info()
+# data.to_csv('test.csv')
+# Iterate over rows and columns and print the value
 
 driver.quit()
+
+
 
