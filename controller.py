@@ -21,13 +21,10 @@ driver = webdriver.Chrome(options=options)
 schoolKeywords = ['Elementary', 'High', 'Middle', 'Academy', 'College', 'School']
 phoneNumberKeywords = ['Phone']
 schoolNameList = []
-
-wb = Workbook()
-sheet = wb.active
-
-columns = ['School Name']
-
+SchoolColumns = ['School Name']
 data = pd.DataFrame()
+
+
 
 # Start
 driver.get(manateeDirectory)
@@ -44,7 +41,7 @@ def getPhoneNumber(filteredList):
     
     finally:
 
-     # Find and return the matching words
+    # Find and return the matching words
         matching_keywords = []
         for word in filteredList:
             if word in keywords:
@@ -63,23 +60,19 @@ def getNextSchool():
         driver.quit()
     finally:
         
-
-
         # Simple Counter
         counter = 0
         
         # Sorting through all instances of flex-container
         schoolsFound = driver.find_elements(By.CLASS_NAME, "flex-container")
-        
-        # Printing the length of the list     
-        # listLength = len(schoolsFound)
-        # print("Length: " + str(listLength))
 
-        for element in schoolsFound :
+        for list in schoolsFound :
             
-            # Formatting the Elements received and putting them in lists
-            formattedList = element.text.split()
+            # update
             counter += 1
+            
+            # Formatting into list
+            formattedList = list.text.split()
             
             # Removes special characters and numbers
             filterNumbers = [x for x in formattedList if x.isalpha()]
@@ -88,43 +81,37 @@ def getNextSchool():
             # Find and return the matching words
             matching_keywords = []
             for word in filterNumbers:
-                if word in keywords:
+                if word in schoolKeywords:
                     matching_keywords.append(word)
             
-            
-            # Test Case to see if one or multiple keywords were found & then transforms it into a string value to be used as input
             
             # If keyword found, grab its POSITION
             if len(matching_keywords) == 1:
                 result = matching_keywords[0]
             
-            # Used if no keyword is found, manually set to None
+            #  No keyword is found, manually set to None
             elif len(matching_keywords) == 0:
                 result = None
             
                 
 
-            # Everything to the left of the found keywords will be pulled and displayed
-            
+            # Everything to the left of the found keywords will be pulled and displayed, if found
             if result == None:
-                elements_to_left = "No keyword was found for this school list"
-
+                elements_to_left = "No keyword found"
             else:
                 keywordPosition = filterNumbers.index(result)
                 elements_to_left = filterNumbers[:keywordPosition + 1] # Plus 1 to add keyword that was found
             
             
-            # Present Final Title
+            # Create a new list of joined final school names
             finalSchoolName = ' '.join(elements_to_left)
-
-            # Adding Final List to a dataframe
-
+            schoolNameList.append(finalSchoolName)
             
             # Debug Log (Prints left in for demo purposes)
             print("---------------- DEBUG LOG -----------------------------")
-            print(" ") # Empty Space
+            print("\n") # Empty Space
             print("List #" + str(counter))
-            print(" ")
+            print("\n")
             # print(keywordPosition)
             print(formattedList)
             # print(filterNumbers)
@@ -132,30 +119,20 @@ def getNextSchool():
             # print(finalSchoolName)
             # print(sheet.cell(row=1, column=1).value)
             # print(sheet)
-            print(" ") 
+            print("\n") 
             print("---------------- END -----------------------------------")
-            print(" ") 
-            print(" ") 
+            print("\n") 
 
-            schoolNameList.append(finalSchoolName)
-
-                
 getNextSchool()
 
-# counterTemp = 0
-# cellRow = 'A' + str(counterTemp) 
-# print(cellRow)
-# Write the list values to the sheet
+# Now that data is collected, it will be added to DataFrame and exported to CSV
 
-# Workbook.save('example.xlsx')
-# print(schoolNameList)
 data = pd.DataFrame(schoolNameList, columns=['School Name'])
 # print(data)
 print("\n")
 print("\n")
 data.info()
 # data.to_csv('test.csv')
-# Iterate over rows and columns and print the value
 
 driver.quit()
 
