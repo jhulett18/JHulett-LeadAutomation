@@ -7,7 +7,6 @@ from openpyxl import Workbook
 
 import pandas as pd
   
-
 manateeDirectory = "https://www.manateeschools.net/schooldirectory"
 
 
@@ -17,65 +16,114 @@ options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(options=options)
 
 # Variable Initializing
-
-schoolKeywords = ['Elementary', 'High', 'Middle', 'Academy', 'College', 'School']
-phoneNumberKeywords = ['Phone']
+phoneNumberList = []
 schoolNameList = []
-SchoolColumns = ['School Name']
+addressList = []
 data = pd.DataFrame()
+readableList=[]
+
+# Keywords Found
+phoneNumberKeywords = ['Phone:','Phone']
+schoolKeywords = ['Elementary', 'High', 'Middle', 'Academy', 'College', 'School']
 
 
 
 # Start
 driver.get(manateeDirectory)
 
-def getPhoneNumber(filteredList):
+def getTargetElement():
     try:
         target = WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.CLASS_NAME, "flex-container"))
-            )
-    
+        )
+        
     except:
         print("Locator for School Information was not found. Try making sure the spelling is correct.")
         driver.quit()
-    
     finally:
+        
+        # update 
+        count = 0
+        
+        # Unreadable code will be stored here, simply just finds css selector
+        elementList = driver.find_elements(By.CLASS_NAME, "flex-container")
+        
+        # For every element in the target list append it to readableList
+        for elements in elementList:
+            count += 1    
+            
+            # Formatting into something we can read
+            readableList.append(elements.text.split())
 
-    # Find and return the matching words
+            
+            # print("---------------- DEBUG LOG -----------------------------")
+            # print("List #" + str(count))
+            # print("\n")
+            # print(readableList)
+            # print(elements.text.split())
+            # print("---------------- END -----------------------------------")
+            # print("\n") 
+        return readableList
+
+def getPhoneNumber(List):
+    
+    # intialize
+    counter = 0
+    
+    for unfilteredElement in List:
+        
+        # update
+        counter += 1
+
+        # Find and return the matching words
         matching_keywords = []
-        for word in filteredList:
-            if word in keywords:
+        for word in unfilteredElement:
+            if word in phoneNumberKeywords:
                 matching_keywords.append(word)
-
-
-def getNextSchool():
-    
-    try:
-        target = WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "flex-container"))
-            )
         
-    except:
-        print("Locator for School Information was not found. Try making sure the spelling is correct.")
-        driver.quit()
-    finally:
+        # If keyword found, grab its POSITION
+        if len(matching_keywords) == 1:
+            result = matching_keywords[0]
         
-        # Simple Counter
+        # No keyword is found, manually set to None
+        elif len(matching_keywords) == 0:
+            result = None
+
+        # Everything to the right of the found keywords will be pulled and displayed, if found
+        if result == None:
+            elements_to_right = "No keyword found"
+        else:
+            keywordPosition = unfilteredElement.index(result)
+            elements_to_right = unfilteredElement[keywordPosition:keywordPosition+3] 
+        
+        # Cleanup Phone Number List
+            cleanPhoneNumberList = ' '.join(elements_to_right)
+            phoneNumberList.append(cleanPhoneNumberList)
+
+        
+        # print("---------------- DEBUG LOG -----------------------------")
+        # print("List #" + str(counter))
+        # print("\n")
+        # print(result)
+        # print(unfilteredElement)
+        # print(elements_to_right)
+        # print("---------------- END -----------------------------------")
+        # print("\n") 
+        
+    return phoneNumberList
+
+def getNextSchool(List):
+        
+        # Initialize 
         counter = 0
         
-        # Sorting through all instances of flex-container
-        schoolsFound = driver.find_elements(By.CLASS_NAME, "flex-container")
-
-        for list in schoolsFound :
+        for unfilteredElements in List:
             
             # update
             counter += 1
             
-            # Formatting into list
-            formattedList = list.text.split()
-            
             # Removes special characters and numbers
-            filterNumbers = [x for x in formattedList if x.isalpha()]
+            filterNumbers = [x for x in unfilteredElements if x.isalpha()]
             
             
             # Find and return the matching words
@@ -88,8 +136,8 @@ def getNextSchool():
             # If keyword found, grab its POSITION
             if len(matching_keywords) == 1:
                 result = matching_keywords[0]
-            
-            #  No keyword is found, manually set to None
+
+            # No keyword is found, manually set to None
             elif len(matching_keywords) == 0:
                 result = None
             
@@ -108,30 +156,109 @@ def getNextSchool():
             schoolNameList.append(finalSchoolName)
             
             # Debug Log (Prints left in for demo purposes)
-            print("---------------- DEBUG LOG -----------------------------")
-            print("\n") # Empty Space
-            print("List #" + str(counter))
-            print("\n")
+            # print("---------------- DEBUG LOG -----------------------------")
+            # print("\n") # Empty Space
+            # print("List #" + str(counter))
+            # print("\n")
             # print(keywordPosition)
-            print(formattedList)
-            # print(filterNumbers)
-            # print(elements_to_left) 
+            # print(unfilteredList)
             # print(finalSchoolName)
-            # print(sheet.cell(row=1, column=1).value)
-            # print(sheet)
-            print("\n") 
-            print("---------------- END -----------------------------------")
-            print("\n") 
+            # print("\n") 
+            # print("---------------- END -----------------------------------")
+            # print("\n") 
 
-getNextSchool()
+        return schoolNameList
+
+def getAddress(List):
+    
+    # intialize
+    counter = 0
+
+    for unfilteredElement in List:
+
+        # update 
+        counter += 1
+    # Need to Find School keyword, this is out starting position
+        school_matching_keywords = []
+        for word in unfilteredElement:
+            if word in schoolKeywords:
+                school_matching_keywords.append(word)
+    
+        # If keyword found, grab its POSITION
+        if len(school_matching_keywords) == 1:
+            school_keyword_result = school_matching_keywords[0]
+    
+        # No keyword is found, manually set to None
+        elif len(school_matching_keywords) == 0:
+            school_keyword_result = None
+    
+    # Now we find Phone Number Keywords keyword Position
+        phone_matching_keywords = []
+        for word in unfilteredElement:
+            if word in phoneNumberKeywords:
+                phone_matching_keywords.append(word)
+    
+        # If keyword found, grab its POSITION
+        if len(phone_matching_keywords) == 1:
+            phone_keyword_result = phone_matching_keywords[0]
+
+        # No keyword is found, manually set to None
+        elif len(phone_matching_keywords) == 0:
+            phone_keyword_result = None
+
+
+    # Now we want to start at school name keyword and end with phone number position
+        if phone_keyword_result  == None:
+            elements_found = "No keyword found"
+        elif school_keyword_result == None:
+            elements_found = "No keyword found"
+        else:
+            schoolkeywordPosition = unfilteredElement.index(school_keyword_result)
+            phonekeywordPosition = unfilteredElement.index(phone_keyword_result)
+            elements_found = unfilteredElement[schoolkeywordPosition+1:phonekeywordPosition]
+
+
+            # Cleanup Address List
+            cleanAddressList = ' '.join(elements_found)
+            addressList.append(cleanAddressList)
+        
+        
+        # print("---------------- DEBUG LOG -----------------------------")
+        # print("List #" + str(counter))
+        # print("\n")
+        # print(unfilteredElement)
+        # print(elements_found)
+        # print(schoolkeywordPosition)
+        # print(phonekeywordPosition)
+        # ("---------------- END -----------------------------------")
+        # print("\n") 
+    return addressList
+
+
+list = getTargetElement()
+numbers = getPhoneNumber(list)
+names = getNextSchool(list)
+address = getAddress(list)
+
+# print(list)
+print("\n")
+print("Phone Numbers Found:")
+print("\n")
+print(numbers)
+print("\n")
+print("School Names Found:")
+print(names)
+print("\n")
+print("School Address Found:")
+print(address)
 
 # Now that data is collected, it will be added to DataFrame and exported to CSV
 
-data = pd.DataFrame(schoolNameList, columns=['School Name'])
+# data = pd.DataFrame(schoolNameList, columns=['School Name'])
 # print(data)
-print("\n")
-print("\n")
-data.info()
+# print("\n")
+# print("\n")
+# data.info()
 # data.to_csv('test.csv')
 
 driver.quit()
